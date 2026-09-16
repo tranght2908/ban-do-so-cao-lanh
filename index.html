@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bản đồ số Cao Lãnh – Prototype</title>
+  <meta name="description" content="Prototype Công cụ số quản lý đô thị, nông sản và hạ tầng kỹ thuật trên nền bản đồ số – phường Cao Lãnh, tỉnh Đồng Tháp (dữ liệu mẫu minh họa).">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>">
+</head>
+<body>
+  <div class="demo-banner">
+    <span><b>PROTOTYPE</b> · Công cụ số quản lý đô thị, nông sản và hạ tầng kỹ thuật trên nền bản đồ số · Toàn bộ đối tượng, tọa độ, số liệu là <b>dữ liệu mẫu minh họa</b>, chưa phải số liệu chính thức</span>
+    <button type="button" data-act="guide">Hướng dẫn xem</button>
+  </div>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-logo">
+          <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M16 5c3 4 3 9 0 14-3-5-3-10 0-14z" fill="#c93d6e"/>
+            <path d="M16 19c-4-1-8-4-9-9 4 0 8 3 9 9z" fill="#e36a93"/>
+            <path d="M16 19c4-1 8-4 9-9-4 0-8 3-9 9z" fill="#e36a93"/>
+            <path d="M6 22h20c-2 4-6 6-10 6s-8-2-10-6z" fill="#0f5c4d"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">Bản đồ số Cao Lãnh</div>
+          <div class="brand-sub">UBND phường Cao Lãnh</div>
+        </div>
+      </div>
+      <nav class="nav" id="nav"></nav>
+      <div class="sidebar-foot">Quản lý đô thị, nông sản, hạ tầng kỹ thuật<br>trên nền bản đồ số dùng chung của tỉnh</div>
+    </aside>
+    <div class="main">
+      <header class="topbar">
+        <button class="btn menu-toggle" type="button" data-act="menu" aria-label="Mở menu">☰</button>
+        <h1 id="page-title">Tổng quan</h1>
+        <div class="row">
+          <span class="label-sm">Vai trò</span>
+          <div class="seg" id="role-seg"></div>
+        </div>
+      </header>
+      <main class="content" id="view"></main>
+    </div>
+  </div>
+  <div id="modal-root"></div>
+  <div class="toasts" id="toasts"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin=""></script>
+  <script src="data.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/v-tongquan.js"></script>
+  <script src="js/v-bando.js"></script>
+  <script src="js/v-doituong.js"></script>
+  <script src="js/v-chamdiem.js"></script>
+  <script src="js/v-hatang.js"></script>
+  <script src="js/v-baocao.js"></script>
+  <script src="js/v-congkhai.js"></script>
+  <script src="js/v-quantri.js"></script>
+</body>
+</html>
