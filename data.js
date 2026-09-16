@@ -2,27 +2,22 @@
    Toàn bộ tên, tọa độ, số liệu đều là giả lập, sinh cố định từ hạt giống để mỗi lần mở đều giống nhau. */
 window.DATA = (function () {
   'use strict';
-  const VERSION = 'bds-2026-09-17-1';
+  const VERSION = 'bds-2026-09-17-2';
   const TODAY = '2026-09-17';
 
   // Tâm bản đồ (khu trung tâm phường Cao Lãnh) và ranh giới mô phỏng
   const CENTER = [10.4672, 105.6303];
-  const OL = 0.008, OG = -0.004; // dịch lưới mô phỏng về tâm phường
-  const T = p => [Math.round((p[0] + OL) * 1e5) / 1e5, Math.round((p[1] + OG) * 1e5) / 1e5];
-  const BOUNDARY = [
-    [10.4795, 105.6120], [10.4810, 105.6330], [10.4775, 105.6520], [10.4700, 105.6640],
-    [10.4560, 105.6660], [10.4430, 105.6580], [10.4380, 105.6400], [10.4400, 105.6200],
-    [10.4480, 105.6100], [10.4640, 105.6080]
-  ].map(T);
+  const G = window.GEO; // hình học thật từ OpenStreetMap (geo.js)
+  const BOUNDARY = G.BOUNDARY;
+  const BB = BOUNDARY.reduce((r, p) => [Math.min(r[0], p[0]), Math.min(r[1], p[1]), Math.max(r[2], p[0]), Math.max(r[3], p[1])], [90, 180, -90, -180]);
   const KHU = Array.from({ length: 12 }, (_, i) => 'Tổ dân phố ' + (i + 1));
   // Khu vực (vùng) mô phỏng để tìm kiếm không gian theo khu vực
   const AREAS = [
-    { id: 'KV1', name: 'Khu trung tâm hành chính', poly: [[10.4650, 105.6260], [10.4660, 105.6420], [10.4560, 105.6430], [10.4550, 105.6270]].map(T) },
-    { id: 'KV2', name: 'Khu dân cư phía Bắc', poly: [[10.4790, 105.6200], [10.4795, 105.6480], [10.4665, 105.6470], [10.4655, 105.6210]].map(T) },
-    { id: 'KV3', name: 'Khu ven sông phía Nam', poly: [[10.4545, 105.6230], [10.4550, 105.6500], [10.4420, 105.6520], [10.4400, 105.6250]].map(T) },
-    { id: 'KV4', name: 'Khu sản xuất nông nghiệp phía Đông', poly: [[10.4720, 105.6480], [10.4740, 105.6630], [10.4470, 105.6640], [10.4460, 105.6480]].map(T) }
+    { id: 'KV1', name: 'Khu trung tâm hành chính', poly: [[10.4700, 105.6150], [10.4700, 105.6340], [10.4600, 105.6340], [10.4600, 105.6150]] },
+    { id: 'KV2', name: 'Khu dân cư phía Tây', poly: [[10.4720, 105.5850], [10.4720, 105.6100], [10.4570, 105.6100], [10.4570, 105.5850]] },
+    { id: 'KV3', name: 'Khu ven sông phía Nam', poly: [[10.4350, 105.6000], [10.4350, 105.6400], [10.4150, 105.6400], [10.4150, 105.6000]] },
+    { id: 'KV4', name: 'Khu sản xuất nông nghiệp phía Đông', poly: [[10.4420, 105.6500], [10.4420, 105.6780], [10.4220, 105.6780], [10.4220, 105.6500]] }
   ];
-
   const GROUPS = {
     dothi: {
       name: 'Đô thị', color: '#c98a0f', ico: '🏙️',
@@ -136,26 +131,8 @@ window.DATA = (function () {
   };
 
   // ---------- lưới đường mô phỏng ----------
-  const ROADS = [
-    { name: 'Đường Nguyễn Huệ', pts: [[10.4470, 105.6300], [10.4560, 105.6320], [10.4650, 105.6335], [10.4760, 105.6350]], pvm: true, w: 18 },
-    { name: 'Đường Lý Thường Kiệt', pts: [[10.4600, 105.6150], [10.4605, 105.6300], [10.4610, 105.6450], [10.4615, 105.6600]], pvm: true, w: 16 },
-    { name: 'Đường Phạm Hữu Lầu', pts: [[10.4500, 105.6180], [10.4520, 105.6330], [10.4530, 105.6480], [10.4540, 105.6620]], pvm: false, w: 14 },
-    { name: 'Đường Tôn Đức Thắng', pts: [[10.4720, 105.6160], [10.4715, 105.6330], [10.4710, 105.6500], [10.4700, 105.6610]], pvm: true, w: 20 },
-    { name: 'Đường Lê Lợi', pts: [[10.4430, 105.6400], [10.4540, 105.6410], [10.4660, 105.6420], [10.4780, 105.6430]], pvm: false, w: 12 },
-    { name: 'Đường Nguyễn Thái Học', pts: [[10.4440, 105.6220], [10.4550, 105.6240], [10.4670, 105.6250], [10.4770, 105.6265]], pvm: false, w: 12 },
-    { name: 'Đường Điện Biên Phủ', pts: [[10.4450, 105.6500], [10.4560, 105.6510], [10.4680, 105.6520], [10.4760, 105.6530]], pvm: false, w: 14 },
-    { name: 'Đường Trần Hưng Đạo', pts: [[10.4660, 105.6120], [10.4665, 105.6300], [10.4668, 105.6480], [10.4670, 105.6620]], pvm: false, w: 14 },
-    { name: 'Đường Đốc Binh Kiều', pts: [[10.4450, 105.6150], [10.4455, 105.6300], [10.4460, 105.6450], [10.4465, 105.6580]], pvm: false, w: 10 },
-    { name: 'Đường Ngô Thì Nhậm', pts: [[10.4560, 105.6120], [10.4565, 105.6250], [10.4568, 105.6380], [10.4570, 105.6520]], pvm: false, w: 10 }
-  ].map(r => { r.pts = r.pts.map(T); return r; });
-  const HEMS = [];
-  for (let i = 0; i < 14; i++) {
-    const r = ROADS[i % ROADS.length], k = 1 + (i % 2), base = r.pts[k];
-    const vertical = Math.abs(r.pts[0][1] - r.pts[3][1]) > Math.abs(r.pts[0][0] - r.pts[3][0]);
-    const len = 0.0025 + rnd() * 0.002, dir = rnd() < 0.5 ? 1 : -1;
-    const end = vertical ? [r4(base[0] + dir * len), r4(base[1] + 0.0004)] : [r4(base[0] + 0.0004), r4(base[1] + dir * len)];
-    HEMS.push({ name: 'Hẻm ' + (i + 1) * 7 + ' ' + r.name.replace('Đường ', ''), pts: [base, end] });
-  }
+  const ROADS = G.ROADS;
+  const HEMS = G.HEMS;
   const along = (pts, step) => {
     const out = [];
     for (let i = 0; i < pts.length - 1; i++) {
@@ -169,7 +146,7 @@ window.DATA = (function () {
   };
   const lineLen = pts => { let s = 0; for (let i = 1; i < pts.length; i++) s += Math.hypot((pts[i][0] - pts[i - 1][0]) * 111000, (pts[i][1] - pts[i - 1][1]) * 108000); return Math.round(s); };
   const offset = (pts, d) => pts.map(p => [r4(p[0] + d), r4(p[1] + d * 0.6)]);
-  const randPt = () => { for (let k = 0; k < 50; k++) { const p = T([10.440 + rnd() * 0.039, 105.612 + rnd() * 0.052]); if (inPoly(p, BOUNDARY)) return p; } return CENTER.slice(); };
+  const randPt = () => { for (let k = 0; k < 80; k++) { const near = rnd() < 0.7; const p = near ? [r4(10.445 + rnd() * 0.03), r4(105.59 + rnd() * 0.05)] : [r4(BB[0] + rnd() * (BB[2] - BB[0])), r4(BB[1] + rnd() * (BB[3] - BB[1]))]; if (inPoly(p, BOUNDARY)) return p; } return CENTER.slice(); };
   const squareAround = (c, s) => [[r4(c[0] - s), r4(c[1] - s * 1.1)], [r4(c[0] - s * 0.9), r4(c[1] + s * 1.2)], [r4(c[0] + s * 1.1), r4(c[1] + s)], [r4(c[0] + s), r4(c[1] - s * 1.05)]];
 
   // ---------- sinh đối tượng ----------
@@ -210,7 +187,7 @@ window.DATA = (function () {
     // Nông sản
     const crops = ['Xoài Cao Lãnh', 'Sen', 'Lúa chất lượng cao', 'Rau an toàn', 'Nhãn', 'Ổi', 'Cá tra (ao nuôi)', 'Hoa kiểng'];
     for (let i = 0; i < 9; i++) {
-      const p = T([10.447 + rnd() * 0.026, 105.648 + rnd() * 0.014]);
+      const p = [r4(10.415 + rnd() * 0.03), r4(105.6 + rnd() * 0.08)];
       const crop = crops[i % crops.length];
       add('nongsan', 'vungtrong', 'Vùng trồng ' + crop.toLowerCase() + ' ' + pad(i + 1), { type: 'polygon', coords: squareAround(p, 0.0009 + rnd() * 0.0008) },
         { chuthe: pick(['HTX Nông sản Cao Lãnh', 'Tổ hợp tác Sen Tháp Mười', 'Hộ Nguyễn Văn Bé', 'HTX Xoài Mỹ Xương', 'Hộ Trần Thị Sáu']), sanpham: crop, dientich: ri(2, 25) + ',' + ri(0, 9) + ' ha', sanluong: ri(20, 300) + ' tấn/năm', chungnhan: pick(['VietGAP', 'VietGAP', 'GlobalGAP', 'Hữu cơ', 'Chưa có']), mavungtrong: rnd() < 0.7 ? 'VN-DT-' + ri(1000, 9999) : 'Chưa cấp' }, { cond: pick(['tot', 'tot', 'kha']) });
@@ -254,7 +231,7 @@ window.DATA = (function () {
       add('nongsan', 'ocop', 'Kẹo sen Tháp Mười', { type: 'point', coords: randPt() }, { chuthe: 'Cơ sở Sen Vàng', hang: '3 sao', namcongnhan: 2026, gia: '65.000 đ', mota: 'Sản phẩm mới đăng ký OCOP năm 2026.' }, { approval: 'choduyet', updated: dateBack(0), by: 'NV04', cond: 'tot' }),
       add('dothi', 'vipham', 'Lấn chiếm vỉa hè Nguyễn Huệ (đoạn chợ)', { type: 'point', coords: randPt() }, { hanhvi: 'Lấn chiếm vỉa hè kinh doanh', ngayphathien: dateBack(1), xuly: 'Đã nhắc nhở' }, { approval: 'choduyet', updated: dateBack(1), by: 'NV03', cond: 'hong', public: false }),
       add('hatang', 'cayxanh', 'Sao đen – Công viên Văn Miếu #12', { type: 'point', coords: randPt() }, { duongkinh: '45 cm', chieucao: '12 m', tuoi: '25 năm', tuyen: 'Công viên Văn Miếu' }, { approval: 'tralai', updated: dateBack(3), by: 'NV02', cond: 'xuongcap', returnReason: 'Thiếu ảnh hiện trạng và tọa độ nằm ngoài ranh giới công viên. Đề nghị khảo sát lại.' }),
-      add('nongsan', 'vungtrong', 'Vùng trồng ổi Tổ dân phố 7', { type: 'polygon', coords: squareAround(T([10.4520, 105.6560]), 0.0007) }, { chuthe: 'Hộ Lê Văn Năm', sanpham: 'Ổi', dientich: '1,8 ha', sanluong: '30 tấn/năm', chungnhan: 'Chưa có', mavungtrong: 'Chưa cấp' }, { approval: 'nhap', updated: dateBack(0), by: 'NV04', cond: 'kha', photos: 0 })
+      add('nongsan', 'vungtrong', 'Vùng trồng ổi Tổ dân phố 7', { type: 'polygon', coords: squareAround([10.4300, 105.6620], 0.0007) }, { chuthe: 'Hộ Lê Văn Năm', sanpham: 'Ổi', dientich: '1,8 ha', sanluong: '30 tấn/năm', chungnhan: 'Chưa có', mavungtrong: 'Chưa cấp' }, { approval: 'nhap', updated: dateBack(0), by: 'NV04', cond: 'kha', photos: 0 })
     ];
     pending.forEach(o => { o.history = [{ at: o.updated, who: o.createdBy, what: o.approval === 'tralai' ? 'Lãnh đạo bộ phận trả lại: ' + o.returnReason : o.approval === 'nhap' ? 'Lưu nháp' : 'Gửi duyệt' }]; });
     objs.slice(0, 40).forEach(o => { if (rnd() < 0.5) o.history.push({ at: dateBack(ri(60, 300)), who: pick(['NV01', 'NV02']), what: pick(['Cập nhật ảnh hiện trạng', 'Sửa thuộc tính kỹ thuật', 'Điều chỉnh vị trí trên bản đồ', 'Bổ sung tài liệu đính kèm']) }); });

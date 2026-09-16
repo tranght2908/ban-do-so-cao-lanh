@@ -27,7 +27,7 @@ Các chức năng chính theo vai trò:
 ## Kỹ thuật
 
 - HTML, CSS, JavaScript thuần; bản đồ dùng [Leaflet](https://leafletjs.com). Không cần build, không có máy chủ.
-- Nền bản đồ trong bản trình diễn dùng OpenStreetMap và ảnh vệ tinh Esri để mô phỏng nền bản đồ số dùng chung của tỉnh.
+- Nền bản đồ trong bản trình diễn dùng OpenStreetMap và ảnh vệ tinh Esri để mô phỏng nền bản đồ số dùng chung của tỉnh. Ranh giới phường và các tuyến đường trong `geo.js` lấy từ OpenStreetMap (ODbL), đã rút gọn đỉnh; các đối tượng khác gắn lên đó là dữ liệu mẫu.
 - Toàn bộ đối tượng, tọa độ, số liệu là **dữ liệu mẫu minh họa** sinh cố định trong `data.js`.
 - Thao tác trong lúc xem (thêm đối tượng, phê duyệt, chấm điểm, sự cố…) lưu ở `localStorage` của trình duyệt. Muốn quay về dữ liệu ban đầu: **Quản trị & phân quyền → Kết nối & danh mục → Đặt lại dữ liệu mẫu**.
 - Chạy trên máy: mở `index.html` bằng trình duyệt (cần kết nối mạng để tải nền bản đồ).
