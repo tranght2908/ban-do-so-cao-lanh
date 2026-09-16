@@ -20,7 +20,7 @@ window.DATA = (function () {
   ];
   const GROUPS = {
     dothi: {
-      name: 'Đô thị', color: '#c98a0f', ico: '🏙️',
+      name: 'Đô thị', color: '#d97706', ico: '🏙️',
       types: [
         { id: 'duong', name: 'Tuyến đường', geom: 'line' },
         { id: 'hem', name: 'Tuyến hẻm', geom: 'line' },
@@ -32,7 +32,7 @@ window.DATA = (function () {
       ]
     },
     nongsan: {
-      name: 'Nông sản', color: '#2e9e6a', ico: '🌾',
+      name: 'Nông sản', color: '#20a04e', ico: '🌾',
       types: [
         { id: 'vungtrong', name: 'Vùng trồng', geom: 'polygon' },
         { id: 'coso', name: 'Cơ sở sản xuất, sơ chế, chế biến', geom: 'point' },
@@ -59,8 +59,8 @@ window.DATA = (function () {
   };
   // Màu riêng từng loại đối tượng trên bản đồ
   const TYPE_COLOR = {
-    duong: '#b07a12', hem: '#d4a04a', phovanminh: '#e0561f', tapketrac: '#8a6d3b', baidoxe: '#b7791f', bienqc: '#c98a0f', vipham: '#d6453b',
-    vungtrong: '#2e9e6a', coso: '#1d7a4f', ocop: '#0f5c4d', diemban: '#5cb85c',
+    duong: '#b07a12', hem: '#d4a04a', phovanminh: '#e0561f', tapketrac: '#8a6d3b', baidoxe: '#b7791f', bienqc: '#d97706', vipham: '#df2225',
+    vungtrong: '#20a04e', coso: '#167a3c', ocop: '#0b4a9e', diemban: '#5cb85c',
     chieusang: '#f2b01e', thoatnuoc: '#2f6fd6', hoga: '#1b4f9c', cayxanh: '#3a9d3a', tramcapnuoc: '#1aa3c8', congtrinh: '#6f4bc4'
   };
   // Nhãn thuộc tính theo loại
@@ -74,11 +74,11 @@ window.DATA = (function () {
     nguon: 'Nguồn nước', apluc: 'Áp lực', hodan: 'Số hộ cấp nước', namxaydung: 'Năm xây dựng', quymo: 'Quy mô'
   };
   const COND = {
-    tot: { label: 'Tốt', color: '#2e9e6a' },
+    tot: { label: 'Tốt', color: '#20a04e' },
     kha: { label: 'Khá', color: '#7bb661' },
     trungbinh: { label: 'Trung bình', color: '#e0a526' },
     xuongcap: { label: 'Xuống cấp', color: '#e5732b' },
-    hong: { label: 'Hư hỏng / cần xử lý', color: '#d6453b' }
+    hong: { label: 'Hư hỏng / cần xử lý', color: '#df2225' }
   };
   const APPROVAL = {
     nhap: { label: 'Nháp', cls: '' },
@@ -103,16 +103,16 @@ window.DATA = (function () {
     { id: '2026-Q3', name: 'Quý III/2026', from: '2026-07-01', to: '2026-09-30', status: 'mo' }
   ];
   const GRADES = [
-    { id: 'tot', label: 'Tốt', min: 80, color: '#1d7a4f' },
+    { id: 'tot', label: 'Tốt', min: 80, color: '#167a3c' },
     { id: 'kha', label: 'Khá', min: 65, color: '#7bb661' },
     { id: 'tb', label: 'Trung bình', min: 50, color: '#e0a526' },
-    { id: 'kem', label: 'Kém', min: 0, color: '#d6453b' }
+    { id: 'kem', label: 'Kém', min: 0, color: '#df2225' }
   ];
   const INC_STATE = {
-    moi: { label: 'Mới tiếp nhận', color: '#d6453b' },
+    moi: { label: 'Mới tiếp nhận', color: '#df2225' },
     phancong: { label: 'Đã phân công', color: '#e0a526' },
     dangxuly: { label: 'Đang xử lý', color: '#2f6fd6' },
-    hoanthanh: { label: 'Đã khắc phục', color: '#2e9e6a' }
+    hoanthanh: { label: 'Đã khắc phục', color: '#20a04e' }
   };
 
   // ---------- sinh ngẫu nhiên có hạt giống ----------

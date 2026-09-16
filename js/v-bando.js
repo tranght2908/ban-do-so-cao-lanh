@@ -25,8 +25,8 @@
   };
   const colorFn = o => {
     if (m.colorBy === 'cond') return D.COND[o.cond].color;
-    if (m.colorBy === 'score') { const s = A.scoreOf(o.id, ui.period); return s == null ? '#9aa8a3' : U.grade(s).color; }
-    if (m.colorBy === 'approval') return { daduyet: '#2e9e6a', choduyet: '#e0a526', tralai: '#d6453b', nhap: '#9aa8a3' }[o.approval];
+    if (m.colorBy === 'score') { const s = A.scoreOf(o.id, ui.period); return s == null ? '#98a3b3' : U.grade(s).color; }
+    if (m.colorBy === 'approval') return { daduyet: '#20a04e', choduyet: '#e0a526', tralai: '#df2225', nhap: '#98a3b3' }[o.approval];
     return U.color(o);
   };
 
@@ -93,8 +93,8 @@
 
   function legend() {
     if (m.colorBy === 'cond') return Object.keys(D.COND).map(c => `<span><i style="background:${D.COND[c].color}"></i>${D.COND[c].label}</span>`).join('');
-    if (m.colorBy === 'score') return D.GRADES.map(g => `<span><i style="background:${g.color}"></i>${g.label} (≥ ${g.min})</span>`).join('') + '<span><i style="background:#9aa8a3"></i>Chưa chấm / không đánh giá</span>';
-    if (m.colorBy === 'approval') return Object.keys(D.APPROVAL).map(c => `<span><i style="background:${{ daduyet: '#2e9e6a', choduyet: '#e0a526', tralai: '#d6453b', nhap: '#9aa8a3' }[c]}"></i>${D.APPROVAL[c].label}</span>`).join('');
+    if (m.colorBy === 'score') return D.GRADES.map(g => `<span><i style="background:${g.color}"></i>${g.label} (≥ ${g.min})</span>`).join('') + '<span><i style="background:#98a3b3"></i>Chưa chấm / không đánh giá</span>';
+    if (m.colorBy === 'approval') return Object.keys(D.APPROVAL).map(c => `<span><i style="background:${{ daduyet: '#20a04e', choduyet: '#e0a526', tralai: '#df2225', nhap: '#98a3b3' }[c]}"></i>${D.APPROVAL[c].label}</span>`).join('');
     return Object.keys(D.GROUPS).filter(g => m.groups[g]).map(g => `<span><i style="background:${D.GROUPS[g].color}"></i><b>${D.GROUPS[g].name}</b></span>` + D.GROUPS[g].types.filter(t => typeOn(t.id)).map(t => `<span style="padding-left:8px"><i style="background:${D.TYPE_COLOR[t.id]}"></i>${t.name}</span>`).join('')).join('');
   }
 

@@ -26,12 +26,12 @@
   M.destroyAll = function () { M.handles.forEach(h => { try { h.map.remove(); } catch (e) { /* bỏ qua */ } }); M.handles = []; };
   M.setBase = function (h, b) { if (h.base === b) return; h.map.removeLayer(h.bases[h.base]); h.base = b; h.bases[b].addTo(h.map); };
   M.boundary = function (h) {
-    h.boundaryLayer = L.polygon(D.BOUNDARY, { color: '#0f5c4d', weight: 2, dashArray: '6 4', fill: false, interactive: false }).addTo(h.map);
+    h.boundaryLayer = L.polygon(D.BOUNDARY, { color: '#0b4a9e', weight: 2, dashArray: '6 4', fill: false, interactive: false }).addTo(h.map);
   };
   M.areas = function (h, on) {
     if (h.areaLayer) { h.map.removeLayer(h.areaLayer); h.areaLayer = null; }
     if (!on) return;
-    h.areaLayer = L.layerGroup(D.AREAS.map(a => L.polygon(a.poly, { color: '#7b4bc4', weight: 1.5, fillOpacity: .06, interactive: false }).bindTooltip(a.name, { permanent: true, direction: 'center', className: 'measure-label' }))).addTo(h.map);
+    h.areaLayer = L.layerGroup(D.AREAS.map(a => L.polygon(a.poly, { color: '#7c54cd', weight: 1.5, fillOpacity: .06, interactive: false }).bindTooltip(a.name, { permanent: true, direction: 'center', className: 'measure-label' }))).addTo(h.map);
   };
 
   M.pin = (o, color, sel) => L.divIcon({ className: '', iconSize: [26, 26], iconAnchor: [13, 26], popupAnchor: [0, -24], html: `<div class="pin ${sel ? 'sel' : ''}" style="background:${color}"><span>${D.TYPE_ICO[o.type] || '📍'}</span></div>` });
@@ -89,13 +89,13 @@
     const redraw = () => {
       if (line) h.tool.removeLayer(line); if (poly) h.tool.removeLayer(poly); if (label) h.tool.removeLayer(label);
       if (kind === 'dist') {
-        line = L.polyline(pts, { color: '#c93d6e', weight: 3, dashArray: '6 4' }).addTo(h.tool);
+        line = L.polyline(pts, { color: '#0089df', weight: 3, dashArray: '6 4' }).addTo(h.tool);
         if (pts.length > 1) label = L.marker(pts[pts.length - 1], { icon: L.divIcon({ className: 'measure-label', html: 'Tổng: ' + U.fmtLen(U.lineLen(pts.map(p => [p.lat, p.lng]))), iconAnchor: [-8, 10] }) }).addTo(h.tool);
       } else {
-        poly = L.polygon(pts, { color: '#c93d6e', weight: 2, fillOpacity: .2 }).addTo(h.tool);
+        poly = L.polygon(pts, { color: '#0089df', weight: 2, fillOpacity: .2 }).addTo(h.tool);
         if (pts.length > 2) { const c = poly.getBounds().getCenter(); label = L.marker(c, { icon: L.divIcon({ className: 'measure-label', html: 'Diện tích: ' + U.fmtArea(U.area(pts.map(p => [p.lat, p.lng]))), iconAnchor: [40, 10] }) }).addTo(h.tool); }
       }
-      pts.forEach(p => L.circleMarker(p, { radius: 4, color: '#c93d6e', fillColor: '#fff', fillOpacity: 1, weight: 2 }).addTo(h.tool));
+      pts.forEach(p => L.circleMarker(p, { radius: 4, color: '#0089df', fillColor: '#fff', fillOpacity: 1, weight: 2 }).addTo(h.tool));
     };
     const onClick = e => { pts.push(e.latlng); redraw(); };
     const onDbl = e => { L.DomEvent.stop(e); h.map.off('click', onClick); h.map.off('dblclick', onDbl); h.map.doubleClickZoom.enable(); h.map.getContainer().style.cursor = ''; st.done = true; if (h.onToolChange) h.onToolChange(st); };
@@ -112,8 +112,8 @@
     h.map.getContainer().style.cursor = 'crosshair';
     const onClick = e => {
       h.tool.clearLayers();
-      L.circle(e.latlng, { radius: r, color: '#7b4bc4', weight: 2, fillOpacity: .1 }).addTo(h.tool);
-      L.circleMarker(e.latlng, { radius: 5, color: '#7b4bc4', fillColor: '#fff', fillOpacity: 1 }).addTo(h.tool);
+      L.circle(e.latlng, { radius: r, color: '#7c54cd', weight: 2, fillOpacity: .1 }).addTo(h.tool);
+      L.circleMarker(e.latlng, { radius: 5, color: '#7c54cd', fillColor: '#fff', fillOpacity: 1 }).addTo(h.tool);
       st.center = [e.latlng.lat, e.latlng.lng]; st.r = r; st.done = true;
       cb(st.center, r);
     };
@@ -132,8 +132,8 @@
     const finish = () => { st.cleanup(); h.map.getContainer().style.cursor = ''; cb(pts.map(p => [Math.round(p.lat * 1e5) / 1e5, Math.round(p.lng * 1e5) / 1e5])); };
     const redraw = () => {
       if (shape) h.tool.removeLayer(shape);
-      shape = geom === 'line' ? L.polyline(pts, { color: '#0f5c4d', weight: 4 }).addTo(h.tool) : L.polygon(pts, { color: '#0f5c4d', weight: 2, fillOpacity: .25 }).addTo(h.tool);
-      pts.forEach(p => L.circleMarker(p, { radius: 4, color: '#0f5c4d', fillColor: '#fff', fillOpacity: 1, weight: 2 }).addTo(h.tool));
+      shape = geom === 'line' ? L.polyline(pts, { color: '#0b4a9e', weight: 4 }).addTo(h.tool) : L.polygon(pts, { color: '#0b4a9e', weight: 2, fillOpacity: .25 }).addTo(h.tool);
+      pts.forEach(p => L.circleMarker(p, { radius: 4, color: '#0b4a9e', fillColor: '#fff', fillOpacity: 1, weight: 2 }).addTo(h.tool));
     };
     const onClick = e => {
       if (geom === 'point') { pts.push(e.latlng); L.marker(e.latlng).addTo(h.tool); finish(); return; }

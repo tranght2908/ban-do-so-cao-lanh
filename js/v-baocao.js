@@ -32,7 +32,7 @@
       PMH = M.create('repmap', { zoom: 14 }); if (!PMH) return;
       const a = D.AREAS.find(x => x.id === ui.repArea);
       let objs = approved().filter(o => !ui.repGroup || o.group === ui.repGroup);
-      if (a) { objs = objs.filter(o => D.inPoly(U.anchor(o), a.poly)); L.polygon(a.poly, { color: '#7b4bc4', weight: 2, fillOpacity: .05, interactive: false }).addTo(PMH.extra); }
+      if (a) { objs = objs.filter(o => D.inPoly(U.anchor(o), a.poly)); L.polygon(a.poly, { color: '#7c54cd', weight: 2, fillOpacity: .05, interactive: false }).addTo(PMH.extra); }
       M.draw(PMH, objs, { onClick: o => A.openObj(o.id) });
       M.fit(PMH, objs);
     };

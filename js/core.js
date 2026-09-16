@@ -151,7 +151,7 @@ window.APP = (function () {
     let g = '';
     for (let k = 0; k <= 4; k++) {
       const y = Tp + ph * (1 - k / 4);
-      g += `<line x1="${L}" x2="${W - Rt}" y1="${y}" y2="${y}" stroke="#e6ecea"/><text x="${L - 6}" y="${y + 4}" text-anchor="end" font-size="11" fill="#7a8883">${o.fmt(max * k / 4)}</text>`;
+      g += `<line x1="${L}" x2="${W - Rt}" y1="${y}" y2="${y}" stroke="#e5eaf1"/><text x="${L - 6}" y="${y + 4}" text-anchor="end" font-size="11" fill="#6b7683">${o.fmt(max * k / 4)}</text>`;
     }
     labels.forEach((lb, i) => {
       const x0 = L + i * bw;
@@ -169,7 +169,7 @@ window.APP = (function () {
           g += `<rect x="${x0 + bw * 0.15 + j * w}" y="${Tp + ph - hh}" width="${w - 2}" height="${Math.max(0, hh)}" fill="${s.color}" rx="2"><title>${lb} · ${s.name}: ${o.fmt(v)}</title></rect>`;
         });
       }
-      g += `<text x="${x0 + bw / 2}" y="${H - 9}" text-anchor="middle" font-size="11" fill="#5f6e69">${lb}</text>`;
+      g += `<text x="${x0 + bw / 2}" y="${H - 9}" text-anchor="middle" font-size="11" fill="#5c646f">${lb}</text>`;
     });
     return `<div class="chart"><svg viewBox="0 0 ${W} ${H}">${g}</svg><div class="chart-legend">${series.map(s => `<span><i style="background:${s.color}"></i>${s.name}</span>`).join('')}</div></div>`;
   };
@@ -177,8 +177,8 @@ window.APP = (function () {
     o = Object.assign({ h: 220, min: 0, max: 100, fmt: v => U.num(v) }, o || {});
     const W = 660, H = o.h, L = 44, B = 28, Tp = 12, Rt = 12, ph = H - Tp - B, pw = W - L - Rt;
     let g = '';
-    for (let k = 0; k <= 4; k++) { const y = Tp + ph * (1 - k / 4); g += `<line x1="${L}" x2="${W - Rt}" y1="${y}" y2="${y}" stroke="#e6ecea"/><text x="${L - 6}" y="${y + 4}" text-anchor="end" font-size="11" fill="#7a8883">${o.fmt(o.min + (o.max - o.min) * k / 4)}</text>`; }
-    labels.forEach((lb, i) => { g += `<text x="${L + pw * (labels.length === 1 ? 0.5 : i / (labels.length - 1))}" y="${H - 9}" text-anchor="middle" font-size="11" fill="#5f6e69">${lb}</text>`; });
+    for (let k = 0; k <= 4; k++) { const y = Tp + ph * (1 - k / 4); g += `<line x1="${L}" x2="${W - Rt}" y1="${y}" y2="${y}" stroke="#e5eaf1"/><text x="${L - 6}" y="${y + 4}" text-anchor="end" font-size="11" fill="#6b7683">${o.fmt(o.min + (o.max - o.min) * k / 4)}</text>`; }
+    labels.forEach((lb, i) => { g += `<text x="${L + pw * (labels.length === 1 ? 0.5 : i / (labels.length - 1))}" y="${H - 9}" text-anchor="middle" font-size="11" fill="#5c646f">${lb}</text>`; });
     series.forEach(s => {
       const pts = s.values.map((v, i) => v == null ? null : [L + pw * (labels.length === 1 ? 0.5 : i / (labels.length - 1)), Tp + ph * (1 - (v - o.min) / (o.max - o.min))]);
       let d = '', prev = false;
@@ -196,7 +196,7 @@ window.APP = (function () {
       arcs += `<circle r="15.9155" cx="21" cy="21" fill="none" stroke="${p.color}" stroke-width="6" stroke-dasharray="${len} ${100 - len}" stroke-dashoffset="${off}"><title>${p.label}: ${p.value}</title></circle>`;
       off -= len;
     });
-    return `<div class="donut-wrap"><svg viewBox="0 0 42 42">${arcs}<text x="21" y="21" text-anchor="middle" font-size="6.5" font-weight="700" fill="#1b2a26">${center ? center[0] : ''}</text><text x="21" y="27" text-anchor="middle" font-size="3.2" fill="#66756f">${center ? center[1] : ''}</text></svg>
+    return `<div class="donut-wrap"><svg viewBox="0 0 42 42">${arcs}<text x="21" y="21" text-anchor="middle" font-size="6.5" font-weight="700" fill="#0f1e32">${center ? center[0] : ''}</text><text x="21" y="27" text-anchor="middle" font-size="3.2" fill="#5c646f">${center ? center[1] : ''}</text></svg>
       <div class="donut-legend">${parts.map(p => `<div><span class="tag"><span class="dot" style="background:${p.color}"></span>${p.label}</span><b>${p.value}</b></div>`).join('')}</div></div>`;
   };
 
