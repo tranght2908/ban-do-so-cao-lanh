@@ -2,6 +2,8 @@
 
 Prototype **Công cụ số quản lý đô thị, nông sản và hạ tầng kỹ thuật trên nền bản đồ số** của phường Cao Lãnh, tỉnh Đồng Tháp.
 
+**Xem trực tiếp:** https://tranght2908.github.io/ban-do-so-cao-lanh/
+
 ## Phạm vi
 
 Ba nhóm lớp dữ liệu chuyên đề được đưa lên nền bản đồ số dùng chung của tỉnh:
