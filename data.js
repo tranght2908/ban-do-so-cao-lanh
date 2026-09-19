@@ -2,7 +2,7 @@
    Toàn bộ tên, tọa độ, số liệu đều là giả lập, sinh cố định từ hạt giống để mỗi lần mở đều giống nhau. */
 window.DATA = (function () {
   'use strict';
-  const VERSION = 'bds-2026-09-17-2';
+  const VERSION = 'bds-2026-09-19-1';
   const TODAY = '2026-09-17';
 
   // Tâm bản đồ (khu trung tâm phường Cao Lãnh) và ranh giới mô phỏng
@@ -48,20 +48,21 @@ window.DATA = (function () {
         { id: 'hoga', name: 'Hố ga', geom: 'point' },
         { id: 'cayxanh', name: 'Cây xanh đô thị', geom: 'point' },
         { id: 'tramcapnuoc', name: 'Trạm cấp nước', geom: 'point' },
-        { id: 'congtrinh', name: 'Công trình công cộng', geom: 'point' }
+        { id: 'congtrinh', name: 'Công trình công cộng', geom: 'point' },
+        { id: 'camera', name: 'Camera giám sát tuyến đường', geom: 'point' }
       ]
     }
   };
   const TYPE_ICO = {
     duong: '🛣️', hem: '↔️', phovanminh: '🏅', tapketrac: '🗑️', baidoxe: '🅿️', bienqc: '🪧', vipham: '⚠️',
     vungtrong: '🌱', coso: '🏭', ocop: '🏷️', diemban: '🛒',
-    chieusang: '💡', thoatnuoc: '🌊', hoga: '⭕', cayxanh: '🌳', tramcapnuoc: '🚰', congtrinh: '🏛️'
+    chieusang: '💡', thoatnuoc: '🌊', hoga: '⭕', cayxanh: '🌳', tramcapnuoc: '🚰', congtrinh: '🏛️', camera: '📹'
   };
   // Màu riêng từng loại đối tượng trên bản đồ
   const TYPE_COLOR = {
     duong: '#b07a12', hem: '#d4a04a', phovanminh: '#e0561f', tapketrac: '#8a6d3b', baidoxe: '#b7791f', bienqc: '#d97706', vipham: '#df2225',
     vungtrong: '#20a04e', coso: '#167a3c', ocop: '#0b4a9e', diemban: '#5cb85c',
-    chieusang: '#f2b01e', thoatnuoc: '#2f6fd6', hoga: '#1b4f9c', cayxanh: '#3a9d3a', tramcapnuoc: '#1aa3c8', congtrinh: '#6f4bc4'
+    chieusang: '#f2b01e', thoatnuoc: '#2f6fd6', hoga: '#1b4f9c', cayxanh: '#3a9d3a', tramcapnuoc: '#1aa3c8', congtrinh: '#6f4bc4', camera: '#0e7490'
   };
   // Nhãn thuộc tính theo loại
   const ATTR_LABEL = {
@@ -71,7 +72,9 @@ window.DATA = (function () {
     chuthe: 'Chủ thể', sanpham: 'Sản phẩm', sanluong: 'Sản lượng', chungnhan: 'Chứng nhận chất lượng', mavungtrong: 'Mã số vùng trồng', congsuat: 'Công suất', laodong: 'Lao động (người)',
     hang: 'Hạng OCOP', namcongnhan: 'Năm công nhận', gia: 'Giá tham khảo', mota: 'Mô tả', giomo: 'Giờ mở cửa', sosp: 'Số sản phẩm bày bán', lienhe: 'Liên hệ',
     cot: 'Loại cột', tuyen: 'Tuyến', tudien: 'Tủ điện', duongkinh: 'Đường kính', huongthoat: 'Hướng thoát', nap: 'Nắp hố ga', chieucao: 'Chiều cao', tuoi: 'Tuổi cây',
-    nguon: 'Nguồn nước', apluc: 'Áp lực', hodan: 'Số hộ cấp nước', namxaydung: 'Năm xây dựng', quymo: 'Quy mô'
+    nguon: 'Nguồn nước', apluc: 'Áp lực', hodan: 'Số hộ cấp nước', namxaydung: 'Năm xây dựng', quymo: 'Quy mô',
+    maCam: 'Mã thiết bị', loaicam: 'Loại camera', dophangiai: 'Độ phân giải', huong: 'Hướng quan sát', tamnhin: 'Tầm quan sát', gocnhin: 'Góc quan sát',
+    truyendan: 'Đường truyền', luutru: 'Thời gian lưu trữ', ketnoi: 'Tình trạng kết nối', ngaylap: 'Ngày lắp đặt', chucnang: 'Chức năng', diachiip: 'Địa chỉ IP / luồng'
   };
   const COND = {
     tot: { label: 'Tốt', color: '#20a04e' },
@@ -146,6 +149,10 @@ window.DATA = (function () {
   };
   const lineLen = pts => { let s = 0; for (let i = 1; i < pts.length; i++) s += Math.hypot((pts[i][0] - pts[i - 1][0]) * 111000, (pts[i][1] - pts[i - 1][1]) * 108000); return Math.round(s); };
   const offset = (pts, d) => pts.map(p => [r4(p[0] + d), r4(p[1] + d * 0.6)]);
+  // Góc phương vị (độ, 0 = hướng Bắc) từ điểm a tới điểm b và tên hướng tiếng Việt
+  const bearing = (a, b) => (Math.atan2((b[1] - a[1]) * Math.cos(a[0] * Math.PI / 180), b[0] - a[0]) * 180 / Math.PI + 360) % 360;
+  const DIRS = ['Bắc', 'Đông Bắc', 'Đông', 'Đông Nam', 'Nam', 'Tây Nam', 'Tây', 'Tây Bắc'];
+  const dirName = deg => DIRS[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
   const randPt = () => { for (let k = 0; k < 80; k++) { const near = rnd() < 0.7; const p = near ? [r4(10.445 + rnd() * 0.03), r4(105.59 + rnd() * 0.05)] : [r4(BB[0] + rnd() * (BB[2] - BB[0])), r4(BB[1] + rnd() * (BB[3] - BB[1]))]; if (inPoly(p, BOUNDARY)) return p; } return CENTER.slice(); };
   const squareAround = (c, s) => [[r4(c[0] - s), r4(c[1] - s * 1.1)], [r4(c[0] - s * 0.9), r4(c[1] + s * 1.2)], [r4(c[0] + s * 1.1), r4(c[1] + s)], [r4(c[0] + s), r4(c[1] - s * 1.05)]];
 
@@ -211,13 +218,39 @@ window.DATA = (function () {
       along(drain, 220).forEach((p, k) => add('hatang', 'hoga', 'Hố ga ' + r.name.replace('Đường ', '') + ' #' + pad(k + 1), { type: 'point', coords: p }, { loai: pick(['Hố ga thu nước', 'Hố ga thăm']), nap: pick(['Gang', 'BTCT', 'Composite']), tuyen: r.name }, { cond: pick(['tot', 'tot', 'kha', 'trungbinh', 'hong']) }));
       if (ri_ < 5) along(r.pts, 90).forEach((p, k) => { if (k % 2) return; add('hatang', 'cayxanh', pick(['Dầu rái', 'Sao đen', 'Bằng lăng', 'Me tây', 'Lim xẹt', 'Phượng vĩ']) + ' – ' + r.name.replace('Đường ', '') + ' #' + pad(k + 1), { type: 'point', coords: [r4(p[0] - 0.00009), r4(p[1] - 0.00006)] }, { duongkinh: ri(15, 70) + ' cm', chieucao: ri(4, 18) + ' m', tuoi: ri(3, 40) + ' năm', tuyen: r.name }, { cond: pick(['tot', 'tot', 'kha', 'trungbinh', 'xuongcap']) }); });
     });
+    // Camera giám sát gắn trên các tuyến đường: vị trí, hướng và vùng quan sát
+    const CAM_KINDS = [
+      { k: 'Camera cố định', fov: 70, range: 110, ai: 'Giám sát an ninh, trật tự đô thị' },
+      { k: 'Camera PTZ xoay 360°', fov: 120, range: 180, ai: 'Quan sát toàn cảnh nút giao, phóng to theo yêu cầu' },
+      { k: 'Camera AI nhận dạng biển số', fov: 55, range: 90, ai: 'Nhận dạng biển số, đếm lưu lượng phương tiện' },
+      { k: 'Camera cố định', fov: 70, range: 120, ai: 'Giám sát vệ sinh môi trường, đổ rác không đúng nơi' }
+    ];
+    ROADS.forEach((r, ri_) => {
+      if (ri_ > 8) return;
+      const line = along(r.pts, 420);
+      line.forEach((p, k) => {
+        if (k === line.length - 1) return;
+        const kind = CAM_KINDS[(ri_ + k) % CAM_KINDS.length];
+        const dir = Math.round(bearing(p, line[k + 1]) + (k % 2 ? 0 : 180)) % 360;
+        const online = rnd() > 0.12;
+        const code = 'CAM-' + pad(ri_ + 1) + pad(k + 1);
+        const o = add('hatang', 'camera', 'Camera ' + r.name.replace('Đường ', '') + ' #' + pad(k + 1), { type: 'point', coords: [r4(p[0] + 0.00007), r4(p[1] - 0.00007)] },
+          {
+            maCam: code, loaicam: kind.k, dophangiai: pick(['2 MP (1080p)', '4 MP (2K)', '4 MP (2K)', '8 MP (4K)']), huong: dirName(dir) + ' (' + dir + '°)',
+            tamnhin: kind.range + ' m', gocnhin: kind.fov + '°', truyendan: pick(['Cáp quang', 'Cáp quang', '4G']), luutru: pick([15, 30, 30, 45]) + ' ngày',
+            ketnoi: online ? 'Trực tuyến' : 'Mất kết nối', ngaylap: dateBack(ri(200, 1500)), chucnang: kind.ai, tuyen: r.name, diachiip: '10.30.' + (ri_ + 1) + '.' + ri(20, 240)
+          },
+          { unit: 2, cond: online ? pick(['tot', 'tot', 'kha']) : pick(['xuongcap', 'hong']), public: false, photos: 2 });
+        o.cam = { code, dir, fov: kind.fov, range: kind.range, online, road: r.name };
+      });
+    });
     ['Trạm cấp nước Cao Lãnh 1', 'Trạm cấp nước Hòa Thuận', 'Trạm bơm tăng áp Bến Tàu'].forEach((n, i) => add('hatang', 'tramcapnuoc', n, { type: 'point', coords: randPt() }, { congsuat: [12000, 5000, 3000][i].toLocaleString('vi-VN') + ' m³/ngày', nguon: pick(['Nước mặt sông Tiền', 'Nước ngầm']), apluc: ri(18, 30) + ' m', hodan: ri(800, 6000) }, { unit: 3, cond: pick(['tot', 'kha']) }));
     ['Trụ sở UBND phường', 'Trạm Y tế phường', 'Nhà văn hóa Tổ dân phố 3', 'Trường Tiểu học Chu Văn An', 'Trường THCS Kim Hồng', 'Công viên Văn Miếu', 'Sân thể thao phường', 'Chợ Cao Lãnh', 'Nhà vệ sinh công cộng Bến Tàu', 'Đài truyền thanh phường'].forEach(n => add('hatang', 'congtrinh', n, { type: 'point', coords: randPt() }, { loai: pick(['Trụ sở', 'Y tế', 'Văn hóa', 'Giáo dục', 'Công viên', 'Thể thao', 'Thương mại']), dientich: ri(300, 12000).toLocaleString('vi-VN') + ' m²', namxaydung: ri(1995, 2022), quymo: pick(['1 tầng', '2 tầng', '3 tầng', 'Khu tổng hợp']) }, { cond: pick(['tot', 'kha', 'trungbinh']) }));
 
     // Thông tin vòng đời cho hạ tầng
     objs.filter(o => o.group === 'hatang').forEach(o => {
       o.life = {
-        year: o.attrs.namxaydung || pick(lampYears),
+        year: o.attrs.namxaydung || (o.attrs.ngaylap ? Number(o.attrs.ngaylap.slice(0, 4)) : pick(lampYears)),
         inspections: Array.from({ length: ri(1, 3) }, () => ({ at: dateBack(ri(10, 400)), by: pick(STAFF.slice(0, 4)).id, result: pick(['Bình thường', 'Bình thường', 'Cần theo dõi', 'Phát hiện hư hỏng nhỏ']) })).sort((a, b) => b.at.localeCompare(a.at)),
         repairs: o.cond === 'tot' && rnd() < 0.6 ? [] : Array.from({ length: ri(0, 2) }, () => ({ at: dateBack(ri(30, 700)), what: pick(['Thay bóng đèn', 'Nạo vét bùn', 'Thay nắp hố ga', 'Sơn cột', 'Cắt tỉa cành', 'Sửa tủ điện', 'Thay ống D600']), cost: ri(5, 120) * 100000 })).sort((a, b) => b.at.localeCompare(a.at)),
         plan: rnd() < 0.35 ? { at: '2026-' + pad(ri(10, 12)) + '-' + pad(ri(1, 28)), what: pick(['Bảo trì định kỳ', 'Thay thế thiết bị', 'Nạo vét định kỳ', 'Sơn bảo dưỡng']), est: ri(10, 400) * 100000 } : null
@@ -278,7 +311,7 @@ window.DATA = (function () {
     });
 
     // ---------- Sự cố hạ tầng ----------
-    const incTitles = [['Đèn không sáng', 'chieusang'], ['Nắp hố ga bị mất', 'hoga'], ['Ngập cục bộ khi mưa lớn', 'thoatnuoc'], ['Cây nghiêng có nguy cơ đổ', 'cayxanh'], ['Cống bị nghẹt', 'thoatnuoc'], ['Cột đèn bị xe tông nghiêng', 'chieusang'], ['Rò rỉ ống nước', 'tramcapnuoc'], ['Vỡ nắp hố ga', 'hoga'], ['Đèn chớp tắt', 'chieusang'], ['Bùn đất tràn cống', 'thoatnuoc']];
+    const incTitles = [['Đèn không sáng', 'chieusang'], ['Nắp hố ga bị mất', 'hoga'], ['Ngập cục bộ khi mưa lớn', 'thoatnuoc'], ['Cây nghiêng có nguy cơ đổ', 'cayxanh'], ['Cống bị nghẹt', 'thoatnuoc'], ['Cột đèn bị xe tông nghiêng', 'chieusang'], ['Rò rỉ ống nước', 'tramcapnuoc'], ['Vỡ nắp hố ga', 'hoga'], ['Đèn chớp tắt', 'chieusang'], ['Bùn đất tràn cống', 'thoatnuoc'], ['Camera mất tín hiệu', 'camera'], ['Camera lệch hướng quan sát, che khuất tầm nhìn', 'camera']];
     const incidents = [];
     const states = ['moi', 'phancong', 'dangxuly', 'hoanthanh', 'hoanthanh', 'hoanthanh'];
     for (let i = 0; i < 26; i++) {

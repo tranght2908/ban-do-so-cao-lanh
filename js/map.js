@@ -36,6 +36,16 @@
 
   M.pin = (o, color, sel) => L.divIcon({ className: '', iconSize: [26, 26], iconAnchor: [13, 26], popupAnchor: [0, -24], html: `<div class="pin ${sel ? 'sel' : ''}" style="background:${color}"><span>${D.TYPE_ICO[o.type] || '📍'}</span></div>` });
 
+  // Vùng quan sát của camera: hình quạt theo hướng và góc mở
+  M.coneCoords = function (p, dir, fov, range) {
+    const rad = Math.PI / 180, out = [p], steps = 14;
+    for (let i = 0; i <= steps; i++) {
+      const th = (dir - fov / 2 + fov * i / steps) * rad;
+      out.push([p[0] + range * Math.cos(th) / 110574, p[1] + range * Math.sin(th) / (111320 * Math.cos(p[0] * rad))]);
+    }
+    return out;
+  };
+
   // Vẽ danh sách đối tượng. opts: colorFn(o), onClick(o), sel (id), popup (bool)
   M.draw = function (h, objs, opts) {
     opts = opts || {};
@@ -52,7 +62,13 @@
       } else {
         lyr = L.polygon(o.geom.coords, { color, weight: sel ? 3 : 2, fillOpacity: sel ? .45 : .28 });
       }
-      if (opts.popup !== false) lyr.bindTooltip(`<b>${U.esc(o.name)}</b><br><span class="muted">${U.typeName(o.type)} · ${D.COND[o.cond].label}</span>`, { sticky: true });
+      if (o.cam && opts.cones !== false) {
+        const cc = o.cam.online ? '#0e7490' : '#df2225';
+        L.polygon(M.coneCoords(o.geom.coords, o.cam.dir, o.cam.fov, o.cam.range), { color: cc, weight: 1, opacity: .75, fillColor: cc, fillOpacity: sel ? .3 : .15, interactive: false, dashArray: o.cam.online ? null : '4 3' }).addTo(h.objLayer);
+      }
+      if (opts.popup !== false) lyr.bindTooltip(o.cam
+        ? `<b>${U.esc(o.name)}</b><br><span class="muted">${o.cam.code} · ${o.attrs.loaicam} · ${o.cam.online ? 'Trực tuyến' : 'Mất kết nối'}<br>Hướng ${U.dirName(o.cam.dir)} (${o.cam.dir}°) · tầm ${o.cam.range} m</span>`
+        : `<b>${U.esc(o.name)}</b><br><span class="muted">${U.typeName(o.type)} · ${D.COND[o.cond].label}</span>`, { sticky: true });
       if (opts.onClick) lyr.on('click', e => { L.DomEvent.stopPropagation(e); opts.onClick(o, e); });
       lyr.addTo(h.objLayer);
       h.markers.set(o.id, lyr);
@@ -143,6 +159,38 @@
     if (geom !== 'point') { h.map.doubleClickZoom.disable(); h.map.on('dblclick', onDbl); }
     h.map.on('click', onClick);
     st.cleanup = () => { h.map.off('click', onClick); h.map.off('dblclick', onDbl); h.map.doubleClickZoom.enable(); };
+    if (h.onToolChange) h.onToolChange(st);
+  };
+
+  // ---------- ghim tọa độ (kiểu Google Maps) ----------
+  const r5 = v => Math.round(v * 1e5) / 1e5;
+  M.pinIcon = () => L.divIcon({ className: '', iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -28], html: '<div class="pin drop"><span>📌</span></div>' });
+  // Thả ghim tại một tọa độ, mở bảng thông tin. h.onPinHtml(p) do màn hình cung cấp nội dung.
+  M.dropPin = function (h, p, opts) {
+    opts = opts || {};
+    if (!h.pinLayer) h.pinLayer = L.layerGroup().addTo(h.map);
+    h.pinLayer.clearLayers();
+    p = [r5(p[0]), r5(p[1])];
+    h.pinAt = p;
+    const mk = L.marker(p, { icon: M.pinIcon(), draggable: true, zIndexOffset: 900 }).addTo(h.pinLayer);
+    const html = q => (h.onPinHtml ? h.onPinHtml(q) : '<b>' + fmtCoord(L.latLng(q[0], q[1])) + '</b>');
+    mk.bindPopup(html(p), { maxWidth: 320, minWidth: 260, className: 'coord-pop', autoPan: true, autoPanPadding: [24, 24] });
+    mk.on('dragend', e => { const ll = e.target.getLatLng(); h.pinAt = [r5(ll.lat), r5(ll.lng)]; mk.setPopupContent(html(h.pinAt)); mk.openPopup(); if (h.onPinMove) h.onPinMove(h.pinAt); });
+    if (opts.pan !== false) h.map.setView(p, Math.max(h.map.getZoom(), opts.zoom || 16), { animate: true });
+    setTimeout(() => mk.openPopup(), opts.pan === false ? 0 : 320);
+    if (h.onPinMove) h.onPinMove(p);
+    return p;
+  };
+  M.clearPin = function (h) { if (h.pinLayer) h.pinLayer.clearLayers(); h.pinAt = null; if (h.onPinMove) h.onPinMove(null); };
+  M.refreshPin = function (h) { if (h.pinAt) M.dropPin(h, h.pinAt, { pan: false }); };
+  // Chế độ bấm để ghim: bấm một điểm bất kỳ trên bản đồ
+  M.pinMode = function (h) {
+    M.stopTool(h);
+    const st = h.toolState = { kind: 'pin', hint: 'Bấm lên bản đồ để ghim tọa độ (hoặc bấm chuột phải ở bất kỳ vị trí nào)' };
+    h.map.getContainer().style.cursor = 'crosshair';
+    const onClick = e => { M.dropPin(h, [e.latlng.lat, e.latlng.lng], { pan: false }); M.stopTool(h); };
+    h.map.on('click', onClick);
+    st.cleanup = () => h.map.off('click', onClick);
     if (h.onToolChange) h.onToolChange(st);
   };
 

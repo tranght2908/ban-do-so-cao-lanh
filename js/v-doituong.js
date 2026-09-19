@@ -86,10 +86,41 @@
 
   // ---------- biểu mẫu thêm / sửa ----------
   let draft = null;
+  // Khối nhập tọa độ thủ công: điểm nhập vĩ độ/kinh độ, đường – vùng nhập danh sách đỉnh
+  function geomFields(anchor) {
+    if (draft.geom.type === 'point') {
+      const p = draft.geom.coords;
+      return `<div class="field"><label>Vĩ độ (WGS-84) *</label><input class="input" data-in="of-lat" value="${p[0]}" placeholder="10.46720"></div>
+        <div class="field"><label>Kinh độ *</label><input class="input" data-in="of-lng" value="${p[1]}" placeholder="105.63030"></div>
+        <div class="field" style="grid-column:1/-1"><label>Dán tọa độ (thập phân, độ–phút–giây hoặc liên kết bản đồ)</label>
+          <div class="row"><input class="input" style="flex:1" id="of-paste" placeholder="VD: 10.46720, 105.63030"><button class="btn sm" data-act="of-paste-ok">Áp dụng</button></div></div>
+        <div class="field" style="grid-column:1/-1"><div class="small muted" id="of-coord-txt">${coordInfo(p)}</div></div>`;
+    }
+    const verts = draft.geom.coords.map(c => c[0] + ', ' + c[1]).join('\n');
+    return `<div class="field" style="grid-column:1/-1"><label>Danh sách đỉnh (mỗi dòng một tọa độ: vĩ độ, kinh độ)</label>
+        <textarea class="input" rows="5" id="of-verts" spellcheck="false" placeholder="10.46720, 105.63030&#10;10.46810, 105.63120">${U.esc(verts)}</textarea>
+        <div class="row" style="margin-top:6px"><button class="btn sm" data-act="of-verts-ok">Áp dụng danh sách đỉnh</button>${draft.geom.coords.length ? '<button class="btn sm" data-act="of-verts-redraw">🖉 Vẽ lại trên bản đồ</button>' : ''}</div></div>
+      <div class="field" style="grid-column:1/-1"><div class="small muted" id="of-coord-txt">${geomInfo()}</div></div>`;
+  }
+  const coordInfo = p => U.dms(p) + ' · VN-2000 (KTT 105°, múi 3°): ' + U.vnTxt(p);
+  const geomInfo = () => {
+    const c = draft.geom.coords;
+    if (!c.length) return 'Chưa có đỉnh nào — nhập danh sách tọa độ ở trên hoặc vẽ trên bản đồ.';
+    return U.geomLabel(draft.geom.type) + ' · ' + c.length + ' đỉnh · ' + (draft.geom.type === 'line' ? U.fmtLen(U.lineLen(c)) : U.fmtArea(U.area(c))) + ' · điểm đầu ' + U.coordTxt(c[0]);
+  };
+  // Thông số quan sát riêng của camera giám sát
+  function camFields() {
+    const c = draft.cam || (draft.cam = { code: draft.attrs.maCam || 'CAM-mới', dir: 0, fov: 70, range: 110, online: true, road: draft.attrs.tuyen || '' });
+    return `<div class="field"><label>Hướng quan sát (độ, 0 = Bắc)</label><input class="input" type="number" data-in="of-cam" data-k="dir" value="${c.dir}" min="0" max="359"></div>
+      <div class="field"><label>Góc mở (độ)</label><input class="input" type="number" data-in="of-cam" data-k="fov" value="${c.fov}" min="20" max="360"></div>
+      <div class="field"><label>Tầm quan sát (m)</label><input class="input" type="number" data-in="of-cam" data-k="range" value="${c.range}" min="20" max="500" step="10"></div>
+      <div class="field"><label>Tình trạng kết nối</label><select class="input" data-ch="of-cam" data-k="online"><option value="1" ${c.online ? 'selected' : ''}>Trực tuyến</option><option value="0" ${c.online ? '' : 'selected'}>Mất kết nối</option></select></div>`;
+  }
   A.objForm = function (o) {
     const isNew = !o.id;
-    draft = isNew ? { group: o.group, type: o.type, geom: o.geom, name: '', cond: 'tot', unit: o.group === 'hatang' ? 0 : o.group === 'dothi' ? 0 : 1, khu: D.KHU[0], public: o.group === 'nongsan', attrs: {}, photos: 0, note: '', docs: [] } : JSON.parse(JSON.stringify(o));
-    if (isNew) attrKeys(o.type).forEach(k => { draft.attrs[k] = ''; });
+    draft = o.__keep ? o : isNew ? { group: o.group, type: o.type, geom: o.geom, name: '', cond: 'tot', unit: o.group === 'hatang' ? 0 : o.group === 'dothi' ? 0 : 1, khu: D.KHU[0], public: o.group === 'nongsan', attrs: {}, photos: 0, note: '', docs: [] } : JSON.parse(JSON.stringify(o));
+    if (isNew && !o.__keep) attrKeys(o.type).forEach(k => { draft.attrs[k] = ''; });
+    delete draft.__keep;
     const anchor = draft.geom.type === 'point' ? draft.geom.coords : (draft.geom.coords[0] || D.CENTER);
     const inside = draft.geom.type === 'point' ? U.inBoundary(draft.geom.coords) : draft.geom.coords.every(U.inBoundary);
     A.modal(A.mHead(isNew ? 'Thêm đối tượng: ' + U.typeName(draft.type) : 'Sửa đối tượng ' + draft.id) + `<div class="modal-b">
@@ -99,8 +130,8 @@
         <div class="field"><label>Đơn vị quản lý</label><select class="input" data-ch="of" data-k="unit">${D.UNITS.map((u, i) => `<option value="${i}" ${Number(draft.unit) === i ? 'selected' : ''}>${u}</option>`).join('')}</select></div>
         <div class="field"><label>Tổ dân phố</label><select class="input" data-ch="of" data-k="khu">${D.KHU.map(k => `<option ${draft.khu === k ? 'selected' : ''}>${k}</option>`).join('')}</select></div>
         <div class="field"><label>Hiển thị trên lớp công khai</label><select class="input" data-ch="of" data-k="public"><option value="1" ${draft.public ? 'selected' : ''}>Có (sau khi duyệt)</option><option value="0" ${!draft.public ? 'selected' : ''}>Không</option></select></div>
-        ${draft.geom.type === 'point' ? `<div class="field"><label>Vĩ độ (WGS-84)</label><input class="input" data-in="of-lat" value="${anchor[0]}"></div><div class="field"><label>Kinh độ</label><input class="input" data-in="of-lng" value="${anchor[1]}"></div>`
-          : `<div class="field" style="grid-column:1/-1"><label>Hình học</label><div class="small">${U.geomLabel(draft.geom.type)} · ${draft.geom.coords.length} đỉnh · ${draft.geom.type === 'line' ? U.fmtLen(U.lineLen(draft.geom.coords)) : U.fmtArea(U.area(draft.geom.coords))} · điểm đầu ${U.coordTxt(anchor)}</div></div>`}
+        ${geomFields(anchor)}
+        ${draft.type === 'camera' ? camFields() : ''}
         <div style="grid-column:1/-1" id="of-check">${inside ? '<span class="tag ok">✓ Vị trí thuộc ranh giới hành chính phường</span>' : '<span class="tag danger">✗ Vị trí nằm ngoài ranh giới phường</span>'}</div>
       </div>
       <div class="divider"></div>
@@ -116,15 +147,56 @@
   A.IN['of'] = el => { draft[el.dataset.k] = el.value; };
   A.CH['of'] = el => { draft[el.dataset.k] = el.dataset.k === 'public' ? el.value === '1' : el.dataset.k === 'unit' ? Number(el.value) : el.value; };
   A.IN['of-attr'] = el => { draft.attrs[el.dataset.k] = el.value; };
-  const recheck = () => { const ok = U.inBoundary(draft.geom.coords); const el = A.$('#of-check'); if (el) el.innerHTML = ok ? '<span class="tag ok">✓ Vị trí thuộc ranh giới hành chính phường</span>' : '<span class="tag danger">✗ Vị trí nằm ngoài ranh giới phường</span>'; };
+  const recheck = () => {
+    const pts = draft.geom.type === 'point' ? [draft.geom.coords] : draft.geom.coords;
+    const bad = pts.filter(p => !U.inBoundary(p)).length;
+    const el = A.$('#of-check');
+    if (el) el.innerHTML = !pts.length ? '<span class="tag warn">Chưa xác định vị trí</span>'
+      : bad ? `<span class="tag danger">✗ ${bad} tọa độ nằm ngoài ranh giới phường</span>` : '<span class="tag ok">✓ Vị trí thuộc ranh giới hành chính phường</span>';
+    const ci = A.$('#of-coord-txt');
+    if (ci) ci.innerHTML = draft.geom.type === 'point' ? coordInfo(draft.geom.coords) : geomInfo();
+  };
   A.IN['of-lat'] = el => { const v = Number(el.value); if (!isNaN(v)) { draft.geom.coords[0] = v; recheck(); } };
   A.IN['of-lng'] = el => { const v = Number(el.value); if (!isNaN(v)) { draft.geom.coords[1] = v; recheck(); } };
+  A.IN['of-cam'] = el => { draft.cam[el.dataset.k] = Number(el.value) || 0; };
+  A.CH['of-cam'] = el => { draft.cam[el.dataset.k] = el.value === '1'; };
+  A.ACT['of-paste-ok'] = () => {
+    const p = U.parseCoord(A.$('#of-paste').value);
+    if (!p) { U.toast('Không đọc được tọa độ — kiểm tra lại định dạng'); return; }
+    draft.geom.coords = p.slice();
+    const la = document.querySelector('[data-in="of-lat"]'), ln = document.querySelector('[data-in="of-lng"]');
+    if (la) la.value = p[0]; if (ln) ln.value = p[1];
+    recheck(); U.toast('Đã nhận tọa độ ' + U.coordTxt(p));
+  };
+  A.ACT['of-verts-ok'] = () => {
+    const lines = A.$('#of-verts').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    const pts = [], bad = [];
+    lines.forEach((s, i) => { const p = U.parseCoord(s); if (p) pts.push(p); else bad.push(i + 1); });
+    const min = draft.geom.type === 'line' ? 2 : 3;
+    if (pts.length < min) { U.toast('Cần ít nhất ' + min + ' đỉnh hợp lệ cho ' + U.geomLabel(draft.geom.type).toLowerCase()); return; }
+    draft.geom.coords = pts;
+    recheck();
+    U.toast('Đã nhận ' + pts.length + ' đỉnh' + (bad.length ? ' · bỏ qua dòng ' + bad.join(', ') : ''));
+  };
+  A.ACT['of-verts-redraw'] = () => {
+    const g = draft.geom.type;
+    A.closeModal();
+    if (A.MAP.handles.length) A.MAP.drawGeom(A.MAP.handles[0], g, coords => { draft.geom.coords = coords; draft.__keep = true; A.objForm(draft); });
+    else U.toast('Mở màn hình Bản đồ tác nghiệp để vẽ lại hình học');
+  };
   A.ACT['of-photo'] = () => { draft.photos = (draft.photos || 0) + 1; U.toast('Đã thêm ảnh hiện trạng (mô phỏng chụp/tải lên)'); };
   A.ACT['of-doc'] = () => { draft.docs.push('Tai-lieu-' + (draft.docs.length + 1) + '.pdf'); U.toast('Đã đính kèm tài liệu (mô phỏng)'); };
   A.ACT['of-save'] = el => {
     if (!draft.name.trim()) { U.toast('Vui lòng nhập tên đối tượng'); return; }
     const pts = draft.geom.type === 'point' ? [draft.geom.coords] : draft.geom.coords;
+    const min = draft.geom.type === 'point' ? 1 : draft.geom.type === 'line' ? 2 : 3;
+    if (pts.length < min) { U.toast('Chưa đủ tọa độ: cần ít nhất ' + min + ' đỉnh cho ' + U.geomLabel(draft.geom.type).toLowerCase()); return; }
     if (pts.some(p => isNaN(p[0]) || isNaN(p[1]) || Math.abs(p[0]) > 90 || Math.abs(p[1]) > 180)) { U.toast('Tọa độ không hợp lệ'); return; }
+    if (draft.type === 'camera' && draft.cam) {
+      draft.cam.code = draft.attrs.maCam || draft.cam.code; draft.cam.road = draft.attrs.tuyen || draft.cam.road;
+      draft.attrs.huong = U.dirName(draft.cam.dir) + ' (' + draft.cam.dir + '°)'; draft.attrs.gocnhin = draft.cam.fov + '°';
+      draft.attrs.tamnhin = draft.cam.range + ' m'; draft.attrs.ketnoi = draft.cam.online ? 'Trực tuyến' : 'Mất kết nối';
+    }
     if (!pts.every(U.inBoundary)) { U.toast('Vị trí nằm ngoài ranh giới phường — không thể ghi nhận'); return; }
     const dup = A.db.objs.find(o => o.id !== draft.id && o.type === draft.type && o.name.trim().toLowerCase() === draft.name.trim().toLowerCase());
     if (dup) { U.toast('Trùng lặp với đối tượng ' + dup.id + ' (cùng tên, cùng lớp)'); return; }

@@ -8,7 +8,7 @@ window.APP = (function () {
     VIEWS: {}, ACT: {}, IN: {}, CH: {},
     ui: {
       role: 'congchuc', page: {}, period: '2026-Q3', group: 'hatang',
-      map: { base: 'street', groups: { dothi: true, nongsan: true, hatang: true }, types: {}, boundary: true, areas: false, q: '', cond: '', unit: '', approval: '', from: '', to: '', sel: null, tool: null, radius: 300, area: '', colorBy: 'type', scoreView: false, listOpen: true },
+      map: { base: 'street', groups: { dothi: true, nongsan: true, hatang: true }, types: {}, boundary: true, areas: false, q: '', cond: '', unit: '', approval: '', from: '', to: '', sel: null, tool: null, radius: 300, area: '', colorBy: 'type', scoreView: false, listOpen: true, cones: true, camOnly: '' },
       obj: { q: '', group: '', type: '', approval: '', cond: '', unit: '', tab: 'list' },
       imp: { step: 0, rows: null, file: '' },
       score: { group: 'hatang', period: '2026-Q3', objId: null, mode: 'desktop', draft: {} },
@@ -69,6 +69,52 @@ window.APP = (function () {
     return `<div class="photo ${cls || ''}" style="background:linear-gradient(135deg,${c1},#243c36)"><span>${D.TYPE_ICO[o.type]}</span><small>Ảnh hiện trạng ${i + 1}</small></div>`;
   };
   U.photos = (o, max) => { const n = Math.min(o.photos || 0, max || 3); let h = ''; for (let i = 0; i < n; i++) h += U.photo(o, i); return h; };
+
+  // ---------- tọa độ ----------
+  const DIRS = ['Bắc', 'Đông Bắc', 'Đông', 'Đông Nam', 'Nam', 'Tây Nam', 'Tây', 'Tây Bắc'];
+  U.bearing = (a, b) => (Math.atan2((b[1] - a[1]) * Math.cos(a[0] * Math.PI / 180), b[0] - a[0]) * 180 / Math.PI + 360) % 360;
+  U.dirName = deg => DIRS[Math.round((((deg % 360) + 360) % 360) / 45) % 8];
+  // Chuyển WGS-84 sang VN-2000 múi 3°, kinh tuyến trục 105°00' (Đồng Tháp) – quy đổi gần đúng để minh họa
+  U.vn2000 = p => {
+    const a = 6378137, f = 1 / 298.257223563, e2 = f * (2 - f), ep2 = e2 / (1 - e2), k0 = 0.9999, FE = 500000;
+    const rad = Math.PI / 180, phi = p[0] * rad, lam = p[1] * rad, lam0 = 105 * rad;
+    const N = a / Math.sqrt(1 - e2 * Math.sin(phi) ** 2), T = Math.tan(phi) ** 2, C = ep2 * Math.cos(phi) ** 2, Aa = (lam - lam0) * Math.cos(phi);
+    const M = a * ((1 - e2 / 4 - 3 * e2 * e2 / 64 - 5 * e2 ** 3 / 256) * phi - (3 * e2 / 8 + 3 * e2 * e2 / 32 + 45 * e2 ** 3 / 1024) * Math.sin(2 * phi)
+      + (15 * e2 * e2 / 256 + 45 * e2 ** 3 / 1024) * Math.sin(4 * phi) - (35 * e2 ** 3 / 3072) * Math.sin(6 * phi));
+    const E = FE + k0 * N * (Aa + (1 - T + C) * Aa ** 3 / 6 + (5 - 18 * T + T * T + 72 * C - 58 * ep2) * Aa ** 5 / 120);
+    const Nn = k0 * (M + N * Math.tan(phi) * (Aa * Aa / 2 + (5 - T + 9 * C + 4 * C * C) * Aa ** 4 / 24 + (61 - 58 * T + T * T + 600 * C - 330 * ep2) * Aa ** 6 / 720));
+    return { x: Math.round(E), y: Math.round(Nn) };
+  };
+  U.vnTxt = p => { const v = U.vn2000(p); return 'X = ' + U.num(v.x) + ' m · Y = ' + U.num(v.y) + ' m'; };
+  U.dms = p => {
+    const one = (v, pos, neg) => { const s = v < 0 ? neg : pos; v = Math.abs(v); const d = Math.floor(v), m = Math.floor((v - d) * 60), sec = ((v - d) * 60 - m) * 60; return d + '°' + U.pad(m) + "'" + sec.toFixed(1) + '"' + s; };
+    return one(p[0], 'B', 'N') + ' ' + one(p[1], 'Đ', 'T');
+  };
+  // Nhận chuỗi tọa độ người dùng dán vào: thập phân, độ–phút–giây, hoặc liên kết Google Maps
+  U.parseCoord = s => {
+    if (!s) return null;
+    s = String(s).trim().replace(/[′’]/g, "'").replace(/[″”]/g, '"');
+    const fix = pair => {
+      let [la, ln] = pair;
+      if (Math.abs(la) > 90 && Math.abs(ln) <= 90) { const t = la; la = ln; ln = t; }
+      if (isNaN(la) || isNaN(ln) || Math.abs(la) > 90 || Math.abs(ln) > 180) return null;
+      return [Math.round(la * 1e5) / 1e5, Math.round(ln * 1e5) / 1e5];
+    };
+    const at = s.match(/@(-?\d+\.\d+),\s*(-?\d+\.\d+)/) || s.match(/[?&]q=(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
+    if (at) return fix([Number(at[1]), Number(at[2])]);
+    const dms = s.match(/(\d+)\s*°\s*(\d+)\s*'\s*([\d.]+)\s*"?\s*([NSBnsb])?[,\s]+(\d+)\s*°\s*(\d+)\s*'\s*([\d.]+)\s*"?\s*([EWĐTewđt])?/);
+    if (dms) {
+      const v1 = Number(dms[1]) + Number(dms[2]) / 60 + Number(dms[3]) / 3600, v2 = Number(dms[5]) + Number(dms[6]) / 60 + Number(dms[7]) / 3600;
+      return fix([/[Ss]/.test(dms[4] || '') ? -v1 : v1, /[WwTt]/.test(dms[8] || '') ? -v2 : v2]);
+    }
+    const nums = s.match(/-?\d+(?:\.\d+)?/g);
+    if (nums && nums.length >= 2) return fix([Number(nums[0]), Number(nums[1])]);
+    return null;
+  };
+  // Đối tượng gần một điểm: [{o, d}] sắp xếp theo khoảng cách
+  U.nearest = (p, n, filter) => A.db.objs.filter(o => o.approval !== 'nhap' && (!filter || filter(o)))
+    .map(o => ({ o, d: Math.min.apply(null, (o.geom.type === 'point' ? [o.geom.coords] : o.geom.coords).map(c => U.dist(p, c))) }))
+    .sort((x, y) => x.d - y.d).slice(0, n || 5);
   U.pager = (key, total, size) => {
     const pages = Math.max(1, Math.ceil(total / size));
     const p = Math.min(ui.page[key] || 0, pages - 1);
@@ -308,7 +354,9 @@ window.APP = (function () {
     A.modal(A.mHead('Hướng dẫn xem prototype') + `<div class="modal-b">
       <p class="muted" style="margin-top:0">Prototype mô phỏng <b>Công cụ số quản lý đô thị, nông sản và hạ tầng kỹ thuật trên nền bản đồ số</b> của phường Cao Lãnh. Đổi <b>Vai trò</b> ở thanh trên cùng để xem từng góc nhìn.</p>
       <ol class="script">
-        <li><div><b>Công chức chuyên môn → Bản đồ tác nghiệp:</b> bật/tắt 03 nhóm lớp, đổi nền đường phố/vệ tinh, đo khoảng cách – diện tích, tìm theo bán kính, bấm vào đối tượng để xem hồ sơ; <b>Thêm đối tượng</b> bằng cách bấm trực tiếp lên bản đồ.</div></li>
+        <li><div><b>Công chức chuyên môn → Bản đồ tác nghiệp:</b> bật/tắt 03 nhóm lớp, đổi nền đường phố/vệ tinh, đo khoảng cách – diện tích, tìm theo bán kính, bấm vào đối tượng để xem hồ sơ; <b>Thêm đối tượng</b> bằng cách bấm trực tiếp lên bản đồ hoặc nhập tọa độ thủ công.</div></li>
+        <li><div><b>Ghim tọa độ:</b> bấm chuột phải (hoặc nút 📌) lên bản đồ để thả ghim — hiện tọa độ WGS-84, độ–phút–giây, quy đổi VN-2000, đối tượng gần nhất và lệnh thêm đối tượng ngay tại điểm đó; nút <b>🔢 Tọa độ</b> để dán và đi tới một tọa độ bất kỳ.</div></li>
+        <li><div><b>Camera giám sát tuyến đường:</b> lớp camera trong nhóm Hạ tầng kỹ thuật hiển thị vùng quan sát hình quạt theo hướng – góc – tầm; chọn camera để xem luồng mô phỏng, chụp ảnh vào hồ sơ, hiệu chỉnh hướng hoặc mở <b>Tường camera</b>.</div></li>
         <li><div><b>Nhập liệu hàng loạt:</b> kéo thả tệp CSV/GeoJSON hoặc dùng tệp mẫu → hệ thống kiểm tra từng dòng (tọa độ, trùng mã, ngoài ranh giới) trước khi ghi nhận.</div></li>
         <li><div><b>Lãnh đạo bộ phận → Phê duyệt dữ liệu:</b> duyệt hoặc trả lại kèm lý do; chỉ dữ liệu đã duyệt mới lên lớp công khai.</div></li>
         <li><div><b>Chấm điểm:</b> chấm theo bộ tiêu chí có trọng số, đính kèm minh chứng, thử chế độ <b>điện thoại thực địa</b>; sang <b>Kết quả & xếp hạng</b> để xem bản đồ tô màu theo điểm và so sánh giữa các kỳ.</div></li>
