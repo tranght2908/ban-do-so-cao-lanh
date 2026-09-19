@@ -324,7 +324,8 @@
   let addAt = null; // tọa độ đặt sẵn khi thêm đối tượng từ ghim
   A.ACT['obj-add-start'] = (el, e, at) => {
     addAt = at || null;
-    const groups = Object.keys(D.GROUPS).filter(g => A.can('them', g));
+    const only = el && el.dataset ? el.dataset.group : '';
+    const groups = Object.keys(D.GROUPS).filter(g => A.can('them', g) && (!only || g === only));
     A.modal(A.mHead('Thêm đối tượng' + (addAt ? ' tại ' + U.coordTxt(addAt) : ' trên bản đồ')) + `<div class="modal-b">
       <p class="muted small" style="margin-top:0">${addAt ? 'Vị trí lấy theo ghim tọa độ; với lớp dạng đường/vùng, hệ thống sẽ mở công cụ vẽ.' : 'Chọn lớp dữ liệu, sau đó bấm trực tiếp lên bản đồ để xác định vị trí (điểm) hoặc vẽ đường/vùng.'} Có thể nhập tọa độ thủ công trong biểu mẫu ở bước sau.</p>
       <div class="row small" style="margin-bottom:8px;gap:10px"><label class="row" style="gap:4px"><input type="radio" name="addmode" value="draw" data-ch="add-mode" ${addAt ? '' : 'checked'}> Bấm / vẽ trên bản đồ</label><label class="row" style="gap:4px"><input type="radio" name="addmode" value="coord" data-ch="add-mode" ${addAt ? 'checked' : ''}> Nhập tọa độ thủ công</label></div>

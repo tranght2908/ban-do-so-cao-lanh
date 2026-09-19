@@ -24,6 +24,20 @@ Các chức năng chính theo vai trò:
 | Quản trị hệ thống | Tài khoản, ma trận phân quyền theo nhóm lớp × hành vi, nhật ký thao tác, kết nối nền bản đồ |
 | Người dân | Lớp thông tin công khai: vùng trồng, cơ sở, sản phẩm OCOP, điểm bán, chỉ đường – không cần đăng nhập |
 
+## Các module trên màn hình
+
+| Nhóm menu | Module |
+|---|---|
+| Điều hành | Bảng điều khiển · Bản đồ tác nghiệp |
+| Quản lý chuyên đề | **Quản lý đô thị** · **Quản lý nông sản** · **Quản lý hạ tầng kỹ thuật** · **Quản lý camera giám sát** · Tra cứu toàn bộ đối tượng · Nhập liệu hàng loạt · Phê duyệt dữ liệu |
+| Chấm điểm, đánh giá | Bộ tiêu chí & kỳ đánh giá · Thực hiện chấm điểm · Kết quả & xếp hạng |
+| Vận hành & phân tích GIS | Tài sản hạ tầng & sự cố · Phân tích không gian |
+| Khai thác | Báo cáo & kết xuất · Lớp thông tin công khai · Quản trị & phân quyền |
+
+Ba module chuyên đề (đô thị, nông sản, hạ tầng kỹ thuật) có cùng bố cục: dải chỉ số của nhóm lớp (số đối tượng, xuống cấp – hư hỏng, chờ duyệt, điểm đánh giá kỳ hiện tại), chip chọn lớp dữ liệu, bảng danh sách có lọc – phân trang, thêm đối tượng và kết xuất Excel/GeoJSON trong phạm vi nhóm lớp đó.
+
+Module **Quản lý camera giám sát** gồm 5 thẻ: *Danh sách thiết bị* (sổ thiết bị, hiệu chỉnh hướng, kết xuất), *Bản đồ & vùng quan sát* (camera + hình quạt quan sát trên nền tuyến đường), *Tường camera* (tối đa 24 luồng theo bộ lọc), *Độ phủ theo tuyến* (mật độ camera/km, tuyến dưới ngưỡng cần lắp bổ sung), *Sự cố & bảo trì* (sự cố camera, thiết bị mất kết nối, kế hoạch bảo trì). Huy hiệu trên menu là số camera đang mất kết nối.
+
 ## Tọa độ và camera trên bản đồ tác nghiệp
 
 - **Ghim tọa độ kiểu bản đồ số:** bấm chuột phải lên bản đồ (hoặc nút 📌) để thả ghim; bảng thông tin hiện tọa độ WGS-84, độ–phút–giây, quy đổi VN-2000 (múi 3°, KTT 105°00′ – gần đúng để minh họa), kiểm tra ranh giới phường, 3 đối tượng gần nhất và các lệnh: thêm đối tượng tại đây, tìm quanh bán kính, sao chép tọa độ. Kéo ghim thì tọa độ cập nhật ngay.

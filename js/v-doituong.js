@@ -12,15 +12,33 @@
     return A.db.objs.filter(o => A.can('xem', o.group) && (!f.group || o.group === f.group) && (!f.type || o.type === f.type) && (!f.approval || o.approval === f.approval) && (!f.cond || o.cond === f.cond) && (f.unit === '' || String(o.unit) === f.unit)
       && (!q || o.name.toLowerCase().includes(q) || o.id.toLowerCase().includes(q))).sort((a, b) => b.updated.localeCompare(a.updated));
   };
-  A.VIEWS['doi-tuong'] = function () {
+  // Module theo nhóm lớp: khóa bộ lọc vào một nhóm và bổ sung dải chỉ số, chip lớp dữ liệu
+  function groupHead(g) {
+    const G = D.GROUPS[g];
+    const all = A.db.objs.filter(o => o.group === g);
+    const pub = all.filter(o => o.approval === 'daduyet');
+    const bad = pub.filter(o => o.cond === 'xuongcap' || o.cond === 'hong');
+    const cho = all.filter(o => o.approval === 'choduyet');
+    const moi = all.filter(o => U.days(o.updated, U.today()) <= 30);
+    const ev = pub.filter(o => o.evaluated);
+    const scored = ev.map(o => A.scoreOf(o.id, ui.period)).filter(s => s != null);
+    return `<div class="kpis">
+      <div class="card kpi"><div class="k-label">Đối tượng lớp ${G.name.toLowerCase()}</div><div class="k-value">${U.num(pub.length)}</div><div class="k-sub">${G.types.length} lớp dữ liệu chuyên đề</div></div>
+      <div class="card kpi"><div class="k-label">Xuống cấp / hư hỏng</div><div class="k-value" style="color:#df2225">${bad.length}</div><div class="k-sub">${U.pct(bad.length, pub.length)}% tổng số đối tượng</div></div>
+      <div class="card kpi"><div class="k-label">Chờ phê duyệt</div><div class="k-value">${cho.length}</div><div class="k-sub">${moi.length} bản ghi cập nhật trong 30 ngày</div></div>
+      <div class="card kpi"><div class="k-label">Điểm đánh giá kỳ ${ui.period}</div><div class="k-value">${scored.length ? U.dec(U.avg(scored)) : '—'}</div><div class="k-sub">${scored.length}/${ev.length} đối tượng đã chấm</div></div></div>
+      <div class="row" style="margin-bottom:10px"><div class="seg"><button class="${f.type === '' ? 'on' : ''}" data-act="obj-f-type" data-t="">Tất cả lớp <span class="muted">(${all.length})</span></button>${G.types.map(t => `<button class="${f.type === t.id ? 'on' : ''}" data-act="obj-f-type" data-t="${t.id}">${D.TYPE_ICO[t.id]} ${t.name} <span class="muted">(${all.filter(o => o.type === t.id).length})</span></button>`).join('')}</div></div>`;
+  }
+  function objListView(g) {
+    if (g) { f.group = g; if (f.type && U.groupOfType(f.type) !== g) f.type = ''; }
     const objs = listObjs(), pg = U.pager('objlist', objs.length, 15);
-    const types = f.group ? D.GROUPS[f.group].types : Object.keys(D.GROUPS).flatMap(g => D.GROUPS[g].types);
-    return `<div class="card"><div class="card-h"><h3>Danh sách đối tượng</h3><span class="tag info">${objs.length}</span><div class="spacer"></div>
-        ${A.can('them') ? '<button class="btn primary" data-act="obj-new">＋ Thêm đối tượng</button>' : ''}<button class="btn" data-act="go" data-to="nhap-lieu">📥 Nhập hàng loạt</button><button class="btn" data-act="obj-export">Xuất Excel</button><button class="btn" data-act="obj-export-geo">Xuất GeoJSON</button></div>
+    const types = f.group ? D.GROUPS[f.group].types : Object.keys(D.GROUPS).flatMap(g2 => D.GROUPS[g2].types);
+    return (g ? groupHead(g) : '') + `<div class="card"><div class="card-h"><h3>${g ? 'Danh sách đối tượng ' + D.GROUPS[g].name.toLowerCase() : 'Danh sách đối tượng'}</h3><span class="tag info">${objs.length}</span><div class="spacer"></div>
+        ${A.can('them', g || undefined) ? `<button class="btn primary" data-act="obj-new" ${g ? 'data-group="' + g + '"' : ''}>＋ Thêm đối tượng</button>` : ''}<button class="btn" data-act="go" data-to="nhap-lieu">📥 Nhập hàng loạt</button><button class="btn" data-act="obj-export">Xuất Excel</button><button class="btn" data-act="obj-export-geo">Xuất GeoJSON</button></div>
       <div class="card-b"><div class="row" style="margin-bottom:10px">
         <input class="input" style="min-width:220px" placeholder="Tìm tên, mã…" data-in="obj-q" value="${U.esc(f.q)}">
-        <select class="input" data-ch="obj-f" data-k="group"><option value="">Tất cả nhóm lớp</option>${Object.keys(D.GROUPS).map(g => `<option value="${g}" ${f.group === g ? 'selected' : ''}>${D.GROUPS[g].name}</option>`).join('')}</select>
-        <select class="input" data-ch="obj-f" data-k="type"><option value="">Tất cả lớp</option>${types.map(t => `<option value="${t.id}" ${f.type === t.id ? 'selected' : ''}>${t.name}</option>`).join('')}</select>
+        ${g ? '' : `<select class="input" data-ch="obj-f" data-k="group"><option value="">Tất cả nhóm lớp</option>${Object.keys(D.GROUPS).map(g2 => `<option value="${g2}" ${f.group === g2 ? 'selected' : ''}>${D.GROUPS[g2].name}</option>`).join('')}</select>
+        <select class="input" data-ch="obj-f" data-k="type"><option value="">Tất cả lớp</option>${types.map(t => `<option value="${t.id}" ${f.type === t.id ? 'selected' : ''}>${t.name}</option>`).join('')}</select>`}
         <select class="input" data-ch="obj-f" data-k="approval"><option value="">Mọi trạng thái duyệt</option>${Object.keys(D.APPROVAL).map(c => `<option value="${c}" ${f.approval === c ? 'selected' : ''}>${D.APPROVAL[c].label}</option>`).join('')}</select>
         <select class="input" data-ch="obj-f" data-k="cond"><option value="">Mọi hiện trạng</option>${Object.keys(D.COND).map(c => `<option value="${c}" ${f.cond === c ? 'selected' : ''}>${D.COND[c].label}</option>`).join('')}</select>
         <select class="input" data-ch="obj-f" data-k="unit"><option value="">Mọi đơn vị</option>${D.UNITS.map((u, i) => `<option value="${i}" ${f.unit === String(i) ? 'selected' : ''}>${u}</option>`).join('')}</select>
@@ -28,13 +46,18 @@
       ${U.table([{ t: 'Mã' }, { t: 'Tên đối tượng' }, { t: 'Nhóm / lớp' }, { t: 'Hình học' }, { t: 'Hiện trạng' }, { t: 'Duyệt' }, { t: 'Đơn vị quản lý' }, { t: 'Ảnh', num: true }, { t: 'Cập nhật' }, { t: '' }],
         objs.slice(pg.start, pg.end).map(o => `<tr class="click" data-act="open-obj" data-id="${o.id}"><td class="nowrap">${o.id}</td><td><b>${U.esc(o.name)}</b></td><td class="small">${D.GROUPS[o.group].ico} ${U.typeName(o.type)}</td><td class="small">${U.geomLabel(o.geom.type)}</td><td>${U.condTag(o.cond)}</td><td>${U.apprTag(o.approval)}</td><td class="small">${D.UNITS[o.unit]}</td><td class="num">${o.photos}</td><td class="nowrap small">${U.dmy(o.updated)}</td><td class="nowrap"><button class="btn sm" data-act="obj-locate" data-id="${o.id}" title="Xem trên bản đồ">🗺️</button></td></tr>`))}
       ${pg.html}</div></div>`;
-  };
+  }
+  A.VIEWS['doi-tuong'] = () => objListView(null);
+  A.VIEWS['ql-dothi'] = () => objListView('dothi');
+  A.VIEWS['ql-nongsan'] = () => objListView('nongsan');
+  A.VIEWS['ql-hatang'] = () => objListView('hatang');
   A.IN['obj-q'] = el => { f.q = el.value; ui.page.objlist = 0; A.render(); };
   A.CH['obj-f'] = el => { f[el.dataset.k] = el.value; if (el.dataset.k === 'group') f.type = ''; ui.page.objlist = 0; A.render(); };
+  A.ACT['obj-f-type'] = el => { f.type = el.dataset.t; ui.page.objlist = 0; A.render(); };
   A.ACT['obj-export'] = () => { const objs = listObjs(); U.csv('doi-tuong', ['Mã', 'Tên', 'Nhóm', 'Lớp', 'Hình học', 'Hiện trạng', 'Trạng thái duyệt', 'Đơn vị quản lý', 'Tổ dân phố', 'Vĩ độ', 'Kinh độ', 'Cập nhật'].concat(['Thuộc tính (JSON)']), objs.map(o => { const p = U.anchor(o); return [o.id, o.name, D.GROUPS[o.group].name, U.typeName(o.type), U.geomLabel(o.geom.type), D.COND[o.cond].label, D.APPROVAL[o.approval].label, D.UNITS[o.unit], o.khu, p[0], p[1], o.updated, JSON.stringify(o.attrs)]; })); U.audit('Xuất danh sách đối tượng (Excel)'); };
   A.ACT['obj-export-geo'] = () => { U.geojson('doi-tuong-cao-lanh', listObjs()); U.audit('Xuất dữ liệu không gian (GeoJSON)'); };
   A.ACT['obj-locate'] = (el, e) => { e.stopPropagation(); ui.map.sel = el.dataset.id; const o = A.idx.obj.get(el.dataset.id); ui.map.groups[o.group] = true; ui.map.types[o.type] = true; A.go('ban-do'); };
-  A.ACT['obj-new'] = () => A.ACT['obj-add-start']();
+  A.ACT['obj-new'] = el => A.ACT['obj-add-start'](el);
 
   // ---------- hồ sơ chi tiết ----------
   A.openObj = function (id) {

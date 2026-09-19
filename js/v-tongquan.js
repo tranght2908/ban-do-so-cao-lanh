@@ -47,7 +47,7 @@
   };
 
   A.CH['dash-period'] = el => { ui.period = el.value; A.render(); };
-  A.ACT['dash-group'] = el => { ui.obj.group = el.dataset.g; ui.obj.type = ''; A.go('doi-tuong'); };
+  A.ACT['dash-group'] = el => { ui.obj.group = el.dataset.g; ui.obj.type = ''; A.go('ql-' + el.dataset.g); };
   A.ACT['dash-export'] = () => {
     const need = A.db.objs.filter(o => o.approval === 'daduyet' && (o.cond === 'hong' || o.cond === 'xuongcap'));
     U.csv('doi-tuong-can-xu-ly', ['Mã', 'Tên', 'Nhóm', 'Lớp', 'Hiện trạng', 'Đơn vị quản lý', 'Tổ dân phố', 'Vĩ độ', 'Kinh độ', 'Cập nhật'], need.map(o => { const p = U.anchor(o); return [o.id, o.name, D.GROUPS[o.group].name, U.typeName(o.type), D.COND[o.cond].label, D.UNITS[o.unit], o.khu, p[0], p[1], o.updated]; }));

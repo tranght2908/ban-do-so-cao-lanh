@@ -10,6 +10,7 @@ window.APP = (function () {
       role: 'congchuc', page: {}, period: '2026-Q3', group: 'hatang',
       map: { base: 'street', groups: { dothi: true, nongsan: true, hatang: true }, types: {}, boundary: true, areas: false, q: '', cond: '', unit: '', approval: '', from: '', to: '', sel: null, tool: null, radius: 300, area: '', colorBy: 'type', scoreView: false, listOpen: true, cones: true, camOnly: '' },
       obj: { q: '', group: '', type: '', approval: '', cond: '', unit: '', tab: 'list' },
+      cam: { tab: 'ds', q: '', road: '', kind: '', conn: '', unit: '' },
       imp: { step: 0, rows: null, file: '' },
       score: { group: 'hatang', period: '2026-Q3', objId: null, mode: 'desktop', draft: {} },
       result: { group: 'hatang', period: '2026-Q3', compare: '2026-Q2' },
@@ -274,8 +275,12 @@ window.APP = (function () {
       { id: 'tong-quan', ico: '📊', label: 'Bảng điều khiển', roles: ['lanhdao', 'truongbp', 'congchuc', 'quantri'] },
       { id: 'ban-do', ico: '🗺️', label: 'Bản đồ tác nghiệp', roles: ['lanhdao', 'truongbp', 'congchuc', 'quantri'] }
     ] },
-    { group: 'Dữ liệu chuyên đề', items: [
-      { id: 'doi-tuong', ico: '📍', label: 'Quản lý đối tượng', roles: ['truongbp', 'congchuc', 'quantri'] },
+    { group: 'Quản lý chuyên đề', items: [
+      { id: 'ql-dothi', ico: '🏙️', label: 'Quản lý đô thị', roles: ['truongbp', 'congchuc', 'quantri', 'lanhdao'] },
+      { id: 'ql-nongsan', ico: '🌾', label: 'Quản lý nông sản', roles: ['truongbp', 'congchuc', 'quantri', 'lanhdao'] },
+      { id: 'ql-hatang', ico: '🔧', label: 'Quản lý hạ tầng kỹ thuật', roles: ['truongbp', 'congchuc', 'quantri', 'lanhdao'] },
+      { id: 'ql-camera', ico: '📹', label: 'Quản lý camera giám sát', roles: ['truongbp', 'congchuc', 'quantri', 'lanhdao'], badge: () => A.db.objs.filter(o => o.type === 'camera' && o.cam && !o.cam.online).length },
+      { id: 'doi-tuong', ico: '📍', label: 'Tra cứu toàn bộ đối tượng', roles: ['truongbp', 'congchuc', 'quantri'] },
       { id: 'nhap-lieu', ico: '📥', label: 'Nhập liệu hàng loạt', roles: ['congchuc', 'quantri'] },
       { id: 'phe-duyet', ico: '✅', label: 'Phê duyệt dữ liệu', roles: ['truongbp', 'quantri', 'congchuc'], badge: () => A.db.objs.filter(o => o.approval === 'choduyet').length }
     ] },
@@ -284,7 +289,7 @@ window.APP = (function () {
       { id: 'cham-diem', ico: '📝', label: 'Thực hiện chấm điểm', roles: ['congchuc', 'truongbp', 'quantri'] },
       { id: 'ket-qua', ico: '🏆', label: 'Kết quả & xếp hạng', roles: ['lanhdao', 'truongbp', 'congchuc', 'quantri'] }
     ] },
-    { group: 'Hạ tầng kỹ thuật (GIS)', items: [
+    { group: 'Vận hành & phân tích GIS', items: [
       { id: 'ha-tang', ico: '🔧', label: 'Tài sản hạ tầng & sự cố', roles: ['lanhdao', 'truongbp', 'congchuc', 'quantri'], badge: () => A.db.incidents.filter(i => i.state === 'moi').length },
       { id: 'phan-tich', ico: '📡', label: 'Phân tích không gian', roles: ['lanhdao', 'truongbp', 'congchuc', 'quantri'] }
     ] },
